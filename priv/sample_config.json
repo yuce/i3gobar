@@ -1,0 +1,8 @@
+[
+    {
+        "name": "text1",
+        "module": "StaticText",
+        "text_color": "#FF0000",
+        "text": "Hello, World!" 
+    }
+]

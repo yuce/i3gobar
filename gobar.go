@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"time"
 )
 
 // BarHeader i3 bar header
 type barHeader struct {
-	Version        int  `json:"version"`
-	ClickEvents    bool `json:"click_events"`
-	StopSignal     int  `json:"stop_signal"`
-	ContinueSignal int  `json:"cont_signal"`
+	Version     int  `json:"version"`
+	ClickEvents bool `json:"click_events"`
+	// StopSignal     int  `json:"stop_signal"`
+	// ContinueSignal int  `json:"cont_signal"`
 }
 
 type BarSlotAlign string
@@ -59,76 +58,78 @@ type BarItem struct {
 	// text          string
 	// textWidth     int
 	// scrollStartAt int
+	ID         int
 	Name       string
 	InstanceOf string
 	Slot       BarSlot
 	SlotConfig map[string]interface{}
-	info       *BarSlotInfo
+	info       BarSlotInfo
 	lastUpdate int64
 	config     BarSlotConfig
 }
 
+type UpdateChannelMsg struct {
+	ID   int
+	Info BarSlotInfo
+}
+
 type Bar struct {
-	items  []BarItem
-	logger *log.Logger
+	items         []BarItem
+	logger        *log.Logger
+	updateChannel chan UpdateChannelMsg
 }
 
 type BarSlot interface {
 	InitSlot(config map[string]interface{}, logger *log.Logger) (BarSlotConfig, error)
-	UpdateSlot() *BarSlotInfo
+	Start(ID int, updateChannel chan<- UpdateChannelMsg)
 	// PauseSlot()
 	// ResumeSlot()
 }
 
 func PrintHeader() {
 	header := barHeader{
-		Version:        1,
-		ClickEvents:    false,
-		StopSignal:     20, // SIGHUP
-		ContinueSignal: 19, // SIGCONT
+		Version:     1,
+		ClickEvents: false,
+		// StopSignal:     20, // SIGHUP
+		// ContinueSignal: 19, // SIGCONT
 	}
 	headerJSON, _ := json.Marshal(header)
 	fmt.Println(string(headerJSON))
+	fmt.Println("[[]")
 }
 
 func CreateBar(items []BarItem, logger *log.Logger) *Bar {
 	barItems := make([]BarItem, 0, len(items))
 	var config BarSlotConfig
 	var err error
-	// var slot BarSlot
-	now := time.Now().Unix()
+	updateChannel := make(chan UpdateChannelMsg)
 	for _, item := range items {
 		config, err = item.Slot.InitSlot(item.SlotConfig, logger)
 		if err == nil {
-			updateItem(&item, now)
+			// updateItem(&item, now)
 			item.info.Name = item.Name
 			item.info.Instance = item.InstanceOf
 			item.config = config
-			// item.Slot = slot
 			barItems = append(barItems, item)
+			go item.Slot.Start(len(barItems)-1, updateChannel)
 		} else {
 			logger.Printf("Error: %q", err)
 		}
 	}
 	return &Bar{
-		items:  barItems,
-		logger: logger,
+		items:         barItems,
+		logger:        logger,
+		updateChannel: updateChannel,
 	}
 }
 
-func updateItem(item *BarItem, now int64) {
-	item.info = item.Slot.UpdateSlot()
-	item.lastUpdate = now
-}
-
 func (bar *Bar) Update() {
-	now := time.Now().Unix()
-	for i, item := range bar.items {
-		if item.config.UpdateInterval < 1 || now-item.lastUpdate < item.config.UpdateInterval {
-			continue
-		} else {
-			bar.items[i].info = item.Slot.UpdateSlot()
-			bar.items[i].lastUpdate = now
+	for {
+		select {
+		case m := <-bar.updateChannel:
+			bar.items[m.ID].info = m.Info
+			bar.Println()
+
 		}
 	}
 }
@@ -137,29 +138,21 @@ func (bar *Bar) Println() {
 	var j []byte
 	var err error
 	bar.logger.Printf("%d %q", len(bar.items), bar.items)
-	fmt.Println("[[]")
-	for _, item := range bar.items {
-		if item.info == nil {
-			bar.logger.Printf("WARNING: slot info is nil: `%s`", item.Name)
-			continue
-		}
+	fmt.Printf(",[\n")
+	for i, item := range bar.items {
 		j, err = json.Marshal(item.info)
 		if err == nil {
-			fmt.Printf(",%s\n", j)
+			if i == 0 {
+				fmt.Printf("%s\n", j)
+			} else {
+				fmt.Printf(",%s\n", j)
+			}
 		} else if j != nil {
 			bar.logger.Printf("ERROR: %q", err)
 		}
 	}
 	fmt.Println("]")
 }
-
-// func (bar *Bar) Marshal() string {
-// 	j, err := json.Marshal(bar.items)
-// 	if err != nil {
-// 		return ""
-// 	}
-// 	return string(j)
-// }
 
 // func scrollText(text string, at int, textWidth int) (int, string) {
 // 	if textWidth < 0 || at < 0 || len(text) < textWidth {

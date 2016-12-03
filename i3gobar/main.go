@@ -44,21 +44,15 @@ func updateLoop(bar *gobar.Bar, ws <-chan int, logger *log.Logger) {
 	}
 }
 
-// slot, err = createSlot(item.InstanceOf)
-// if err != nil {
-// 	logger.Printf("Warning: Undefined module: `%s`: %q", item.InstanceOf, err)
-// 	continue
-// }
-
 func main() {
-	logfile, err := os.OpenFile("/home/yuce/ramdisk/gobar.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	logfile, err := os.OpenFile("/dev/null", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		fmt.Println("ERR:", err)
 	}
 	defer logfile.Close()
 	logger := log.New(logfile, "gobar:", log.Lshortfile|log.LstdFlags)
 	Init()
-	barItems := make([]gobar.BarItem, 1)
+	barItems := make([]gobar.BarItem, 3)
 	barItems[0] = gobar.BarItem{
 		Name:       "text1",
 		InstanceOf: "StaticText",
@@ -68,6 +62,27 @@ func main() {
 			"module":     "StaticText",
 			"text_color": "#FF0000",
 			"text":       "Hello, World!",
+		},
+	}
+	barItems[1] = gobar.BarItem{
+		Name:       "text2",
+		InstanceOf: "StaticText",
+		Slot:       &BarStaticText{},
+		SlotConfig: map[string]interface{}{
+			"name":       "text2",
+			"module":     "StaticText",
+			"text_color": "#00FF00",
+			"text":       "Yet another bar item!",
+		},
+	}
+	barItems[2] = gobar.BarItem{
+		Name:       "datetime1",
+		InstanceOf: "DateTime",
+		Slot:       &BarDateTime{},
+		SlotConfig: map[string]interface{}{
+			"name":   "datetime1",
+			"module": "DateTime",
+			// "text_color": "#0000FF",
 		},
 	}
 	bar := gobar.CreateBar(barItems, logger)
@@ -97,7 +112,5 @@ func main() {
 		done <- true
 	}()
 	<-done
-	// bar := gobar.CreateBar()
-	// updateLoop(bar, ws, logger)
 	logger.Println("Ended")
 }

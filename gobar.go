@@ -40,9 +40,9 @@ type BarSlotInfo struct {
 	Align               BarSlotAlign  `json:"align,omitempty"`
 	Name                string        `json:"name"`
 	Instance            string        `json:"instance,omitempty"`
-	IsUrgent            bool          `json:"urgent,omitempty"`
-	HasSeparator        bool          `json:"separator,omitempty"`
-	SeparatorBlockWidth int           `json:"separator_block_width,omitempty"`
+	IsUrgent            bool          `json:"urgent"`
+	HasSeparator        bool          `json:"separator"`
+	SeparatorBlockWidth int           `json:"separator_block_width"`
 	Markup              BarSlotMarkup `json:"markup,omitempty"`
 }
 
@@ -78,7 +78,7 @@ type Bar struct {
 }
 
 type BarSlot interface {
-	InitSlot(config map[string]interface{}, logger *log.Logger) (BarSlotConfig, error)
+	InitSlot(config map[string]interface{}, defaults *BarSlotInfo, logger *log.Logger) (BarSlotConfig, error)
 	Start(ID int, updateChannel chan<- UpdateChannelMsg)
 	// PauseSlot()
 	// ResumeSlot()
@@ -96,7 +96,7 @@ func PrintHeader() {
 	fmt.Println("[[]")
 }
 
-func CreateBar(items []BarItem, logger *log.Logger) *Bar {
+func CreateBar(items []BarItem, defaults *BarSlotInfo, logger *log.Logger) *Bar {
 	var config BarSlotConfig
 	var err error
 	// var barItems []BarItem
@@ -104,12 +104,11 @@ func CreateBar(items []BarItem, logger *log.Logger) *Bar {
 	var item BarItem
 	for i := 0; i < len(items); i++ {
 		item = items[i]
-		config, err = item.Slot.InitSlot(item.SlotConfig, logger)
+		config, err = item.Slot.InitSlot(item.SlotConfig, defaults, logger)
 		if err == nil {
 			item.info.Name = item.Name
 			item.info.Instance = item.Module
 			item.config = config
-			// barItems = append(barItems, item)
 			go item.Slot.Start(i, updateChannel)
 		} else {
 			logger.Printf("Error: %q", err)
@@ -138,9 +137,9 @@ func (bar *Bar) Println() {
 	bar.logger.Printf("%d %q", len(bar.items), bar.items)
 	fmt.Printf(",[\n")
 	for i, item := range bar.items {
-		item.info.FullText = fmt.Sprintf("%s%s", item.Label, item.info.FullText)
+		item.info.FullText = fmt.Sprintf(" %s%s ", item.Label, item.info.FullText)
 		item.info.Name = item.Name
-		// item.info.Instance = item.InstanceOf
+		item.info.Instance = item.Module
 
 		j, err = json.Marshal(item.info)
 		if err == nil {
@@ -183,13 +182,25 @@ func CreateSlot(name string) (BarSlot, error) {
 	return nil, fmt.Errorf("Module not found: `%s`", name)
 }
 
-func MapToBarSlotInfo(m map[string]interface{}, info *BarSlotInfo) {
+func MapToBarSlotInfo(m map[string]interface{}, defaults *BarSlotInfo) BarSlotInfo {
 	b, err := json.Marshal(m)
-	if err != nil {
-		info = &BarSlotInfo{}
-		return
+	var info BarSlotInfo
+	if defaults != nil {
+		info = *defaults
+	} else {
+		info = BarSlotInfo{
+			MinWidth:            0,
+			Align:               LEFT,
+			IsUrgent:            false,
+			HasSeparator:        true,
+			SeparatorBlockWidth: 10,
+		}
 	}
-	json.Unmarshal(b, info)
+	if err != nil {
+		return info
+	}
+	json.Unmarshal(b, &info)
+	return info
 }
 
 func MapToBarItem(m map[string]interface{}, item *BarItem) {

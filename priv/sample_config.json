@@ -1,57 +1,108 @@
-[
-    {
-        "name": "text1",
-        "module": "StaticText",
-        "color": "#00DDDD",
-        "background": "#1111FF",
-        "full_text": "o === >"
+{
+    "defaults": {
+        "separator": false,
+        "separator_block_width": 0
     },
-    {
-        "name": "used_mem",
-        "module": "ExternalCommand",
-        "label": "Mem: ",
-        "command": "free -m | awk 'NR == 2 {printf(\"%1.2f/%1.2f G\", $3/1024, $2/1024)}'",
-        "interval": 60
-    },
-    {
-        "name": "used_swap",
-        "module": "ExternalCommand",
-        "label": "Swap: ",
-        "command": "free -m | awk 'NR == 3 {printf(\"%1.2f/%1.2f G\", $3/1024, $2/1024)}'",
-        "interval": 60
-    },
-    {
-        "name": "used_root_disk",
-        "module": "ExternalCommand",
-        "label": "/: ",
-        "command": "df -m | awk '$6 == \"/\" {printf(\"%1.2fG (%1.2f%%)\", $3/1024, $3/$2*100)}'",
-        "interval": 120
-    },
-    {
-        "name": "external_ip",
-        "module": "ExternalCommand",
-        "label": "E: ",
-        "command": "dig +short myip.opendns.com @resolver1.opendns.com"
-    },
-    {
-        "name": "internal_ip",
-        "module": "ExternalCommand",
-        "label": "I: ",
-        "command": "hostname --all-ip-addresses"
-    },
-    {
-        "name": "austin_date",
-        "module": "DateTime",
-        "label": "Ast: ",
-        "format":   "15:04",
-        "location": "America/Chicago",
-        "interval": 30
-    },        
-    {
-        "name": "gaziantep_date",
-        "module": "DateTime",
-        "label": "Gzt: ",
-        "format":   "2006-01-02 15:04",
-        "interval": 30
-    }        
-]
+    "items": [   
+        {
+            "name": "text2",
+            "module": "StaticText",
+            "color": "#ffffff",
+            "background": "#01638e",
+            "border": "#01638e",
+            "full_text": "Color 1",
+            "separator": false
+        },
+        {
+            "name": "text3",
+            "module": "StaticText",
+            "color": "#ffffff",
+            "background": "#039ac0",
+            "full_text": "Color 2"
+        },
+        {
+            "name": "text4",
+            "module": "StaticText",
+            "color": "#ffffff",
+            "background": "#f3cese",
+            "full_text": "Color 3"
+        },
+        {
+            "name": "text5",
+            "module": "StaticText",
+            "color": "#ffffff",
+            "background": "#f4884a",
+            "full_text": "Color 4"
+        },
+        {
+            "name": "text6",
+            "module": "StaticText",
+            "color": "#ffffff",
+            "background": "#f06e4f",
+            "full_text": "Color 5"
+        },
+        {
+            "name": "used_mem",
+            "module": "ExternalCommand",
+            "label": "Mem: ",
+            "command": "free -m | awk 'NR == 2 {printf(\"%1.2f/%1.2f G\", $3/1024, $2/1024)}'",
+            "interval": 60
+        },
+        {
+            "name": "used_swap",
+            "module": "ExternalCommand",
+            "label": "Swap: ",
+            "command": "free -m | awk 'NR == 3 {printf(\"%1.2f/%1.2f G\", $3/1024, $2/1024)}'",
+            "interval": 60
+        },
+        {
+            "name": "used_root_disk",
+            "module": "ExternalCommand",
+            "label": "/: ",
+            "command": "df -m | awk '$6 == \"/\" {printf(\"%1.2fG (%1.2f%%)\", $3/1024, $3/$2*100)}'",
+            "interval": 120
+        },
+        {
+            "name": "external_ip",
+            "module": "ExternalCommand",
+            "label": "E: ",
+            "command": "dig +short myip.opendns.com @resolver1.opendns.com"
+        },
+        {
+            "name": "internal_ip",
+            "module": "ExternalCommand",
+            "label": "I: ",
+            "command": "hostname --all-ip-addresses"
+        },
+        {
+            "name": "wifi",
+            "module": "ExternalCommand",
+            "command": "echo `iwgetid -r` `awk 'NR==3 {print $3 \"00%\"}' /proc/net/wireless`",
+            "interval": 60
+        },
+        {
+            "name": "battery",
+            "module": "ExternalCommand",
+            "label": "⚡ ",
+            "command": "upower -i $(upower -e | grep 'BAT')|grep percentage|awk '{print $2}'",
+            "interval": 60
+        },
+        {
+            "name": "austin_date",
+            "module": "DateTime",
+            "label": "A: ",
+            "format":   "15:04",
+            "location": "America/Chicago",
+            "interval": 30
+        },        
+        {
+            "name": "gaziantep_date",
+            "module": "DateTime",
+            "label": "G: ",
+            "format":   "2006-01-02 15:04",
+            "interval": 30,
+            "color": "#111111",
+            "background": "#FFBA0D"
+        }        
+    ]
+}

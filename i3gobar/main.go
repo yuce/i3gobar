@@ -26,6 +26,13 @@ const (
 	Running
 )
 
+type Configuration struct {
+	Defaults    map[string]interface{}   `json:"defaults"`
+	Items       []map[string]interface{} `json:"items"`
+	barItems    []gobar.BarItem
+	barDefaults gobar.BarSlotInfo
+}
+
 func updateLoop(bar *gobar.Bar, ws <-chan int, logger *log.Logger) {
 	state := Running
 	for {
@@ -49,21 +56,22 @@ func updateLoop(bar *gobar.Bar, ws <-chan int, logger *log.Logger) {
 	}
 }
 
-func loadConfig(path string) (items []gobar.BarItem, err error) {
+func loadConfig(path string) (*Configuration, error) {
 	text, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var configItems []map[string]interface{}
-	json.Unmarshal(text, &configItems)
-	for _, ci := range configItems {
+	var config Configuration
+	json.Unmarshal(text, &config)
+	for _, ci := range config.Items {
 		var item gobar.BarItem
 		gobar.MapToBarItem(ci, &item)
-		// mapstructure.Decode(ci, &item)
 		item.SlotConfig = ci
-		items = append(items, item)
+		config.barItems = append(config.barItems, item)
 	}
-	return
+	config.barDefaults = gobar.MapToBarSlotInfo(config.Defaults, nil)
+
+	return &config, err
 }
 
 func main() {
@@ -83,9 +91,9 @@ func main() {
 	logger := log.New(logfile, "gobar:", log.Lshortfile|log.LstdFlags)
 
 	Init()
-	var barItems []gobar.BarItem
 	logger.Printf("Loading configuration from: %s", configPath)
-	barItems, err = loadConfig(configPath)
+	config, err := loadConfig(configPath)
+	barItems := config.barItems
 	if err != nil {
 		barItems = make([]gobar.BarItem, 1)
 		barItems[0] = gobar.BarItem{
@@ -113,7 +121,7 @@ func main() {
 		}
 	}
 
-	bar := gobar.CreateBar(barItems, logger)
+	bar := gobar.CreateBar(barItems, &config.barDefaults, logger)
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)
 	ws := make(chan int, 1)

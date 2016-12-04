@@ -18,9 +18,8 @@ type BarExternalCommand struct {
 	info     gobar.BarSlotInfo
 }
 
-func (slot *BarExternalCommand) InitSlot(config map[string]interface{}, logger *log.Logger) (gobar.BarSlotConfig, error) {
-	var info gobar.BarSlotInfo
-	gobar.MapToBarSlotInfo(config, &info)
+func (slot *BarExternalCommand) InitSlot(config map[string]interface{}, defaults *gobar.BarSlotInfo, logger *log.Logger) (gobar.BarSlotConfig, error) {
+	info := gobar.MapToBarSlotInfo(config, defaults)
 	slot.info = info
 	if command, ok := config["command"].(string); ok {
 		slot.command = command

@@ -34,7 +34,7 @@ type BarSlotInfo struct {
 	FullText            string        `json:"full_text"`
 	ShortText           string        `json:"short_text,omitempty"`
 	TextColor           string        `json:"color,omitempty"`
-	BackgroundColor     string        `json:"bacgkround,omitempty"`
+	BackgroundColor     string        `json:"background,omitempty"`
 	BorderColor         string        `json:"border,omitempty"`
 	MinWidth            int           `json:"min_width,omitempty"`
 	Align               BarSlotAlign  `json:"align,omitempty"`
@@ -55,15 +55,12 @@ type BarSlotConfigItem map[string]interface{}
 
 // BarItem i3 bar item
 type BarItem struct {
-	// text          string
-	// textWidth     int
-	// scrollStartAt int
 	ID         int
 	Name       string `json:"name"`
-	InstanceOf string `json:"module"`
+	Module     string `json:"module"`
 	Label      string `json:"label"`
 	Slot       BarSlot
-	SlotConfig map[string]interface{} `json:"config"`
+	SlotConfig map[string]interface{} //`json:"config"`
 	info       BarSlotInfo
 	lastUpdate int64
 	config     BarSlotConfig
@@ -110,7 +107,7 @@ func CreateBar(items []BarItem, logger *log.Logger) *Bar {
 		config, err = item.Slot.InitSlot(item.SlotConfig, logger)
 		if err == nil {
 			item.info.Name = item.Name
-			item.info.Instance = item.InstanceOf
+			item.info.Instance = item.Module
 			item.config = config
 			// barItems = append(barItems, item)
 			go item.Slot.Start(i, updateChannel)
@@ -184,4 +181,22 @@ func CreateSlot(name string) (BarSlot, error) {
 		return nil, fmt.Errorf("Cannot create instance of `%s`", name)
 	}
 	return nil, fmt.Errorf("Module not found: `%s`", name)
+}
+
+func MapToBarSlotInfo(m map[string]interface{}, info *BarSlotInfo) {
+	b, err := json.Marshal(m)
+	if err != nil {
+		info = &BarSlotInfo{}
+		return
+	}
+	json.Unmarshal(b, info)
+}
+
+func MapToBarItem(m map[string]interface{}, item *BarItem) {
+	b, err := json.Marshal(m)
+	if err != nil {
+		item = &BarItem{}
+		return
+	}
+	json.Unmarshal(b, item)
 }

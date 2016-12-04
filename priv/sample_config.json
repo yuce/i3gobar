@@ -2,42 +2,48 @@
     {
         "name": "text1",
         "module": "StaticText",
-        "config": {
-            "text_color": "#FF0000",
-            "text": "Hello, World!" 
-        }
+        "color": "#00DDDD",
+        "background": "#1111FF",
+        "full_text": "o === >"
     },
     {
-        "name": "datetime1",
-        "module": "DateTime",
-        "config": {
-            "format":   "2006-01-02 15:04",
-            "interval": 30
-        }
-    },
-    {
-        "name": "external1",
-        "module": "ExternalCommand",
-        "label": "I: ",
-        "config": {
-            "command": "hostname --all-ip-addresses"
-        }        
-    },
-    {
-        "name": "external2",
-        "module": "ExternalCommand",
-        "label": "E: ",
-        "config": {
-            "command": "dig +short myip.opendns.com @resolver1.opendns.com"
-        }
-    },
-    {
-        "name": "external3",
+        "name": "used_mem",
         "module": "ExternalCommand",
         "label": "Mem: ",
-        "config": {
-            "command":  "free -m | awk 'NR == 2 {printf(\"%1.2f/%1.2f\\n\", $7/1024, $2/1024)}'",
-            "interval": 60
-        }
-    }
+        "command": "free -m | awk 'NR == 2 {printf(\"%1.2f/%1.2f G\", $3/1024, $2/1024)}'",
+        "interval": 60
+    },
+    {
+        "name": "used_swap",
+        "module": "ExternalCommand",
+        "label": "Swap: ",
+        "command": "free -m | awk 'NR == 3 {printf(\"%1.2f/%1.2f G\", $3/1024, $2/1024)}'",
+        "interval": 60
+    },
+    {
+        "name": "used_root_disk",
+        "module": "ExternalCommand",
+        "label": "/: ",
+        "command": "df -m | awk '$6 == \"/\" {printf(\"%1.2fG (%1.2f%%)\", $3/1024, $3/$2*100)}'",
+        "interval": 120
+    },
+    {
+    "name": "external_ip",
+    "module": "ExternalCommand",
+    "label": "E: ",
+    "command": "dig +short myip.opendns.com @resolver1.opendns.com"
+    },
+    {
+        "name": "internal_ip",
+        "module": "ExternalCommand",
+        "label": "I: ",
+        "command": "hostname --all-ip-addresses"
+    },
+    {
+        "name": "gaziantep_date",
+        "module": "DateTime",
+        "label": "Gzt: ",
+        "format":   "2006-01-02 15:04",
+        "interval": 30
+    }        
 ]

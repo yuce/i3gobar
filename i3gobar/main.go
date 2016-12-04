@@ -54,7 +54,15 @@ func loadConfig(path string) (items []gobar.BarItem, err error) {
 	if err != nil {
 		return nil, err
 	}
-	json.Unmarshal(text, &items)
+	var configItems []map[string]interface{}
+	json.Unmarshal(text, &configItems)
+	for _, ci := range configItems {
+		var item gobar.BarItem
+		gobar.MapToBarItem(ci, &item)
+		// mapstructure.Decode(ci, &item)
+		item.SlotConfig = ci
+		items = append(items, item)
+	}
 	return
 }
 
@@ -86,18 +94,18 @@ func main() {
 			Slot:  &BarStaticText{},
 			SlotConfig: map[string]interface{}{
 				"text_color": "#FF0000",
-				"text":       err.Error(),
+				"full_text":  err.Error(),
 			},
 		}
 	} else {
 		for i := 0; i < len(barItems); i++ {
-			slot, err := gobar.CreateSlot(barItems[i].InstanceOf)
+			slot, err := gobar.CreateSlot(barItems[i].Module)
 			if err != nil {
 				barItems[i].Slot = &BarStaticText{}
 				barItems[i].Label = "ERR: "
 				barItems[i].SlotConfig = map[string]interface{}{
 					"text_color": "#FF0000",
-					"text":       err.Error(),
+					"full_text":  err.Error(),
 				}
 			} else {
 				barItems[i].Slot = slot

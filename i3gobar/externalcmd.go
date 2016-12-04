@@ -13,15 +13,15 @@ import (
 )
 
 type BarExternalCommand struct {
-	textColor string
-	command   string
-	interval  int
+	command  string
+	interval int
+	info     gobar.BarSlotInfo
 }
 
 func (slot *BarExternalCommand) InitSlot(config map[string]interface{}, logger *log.Logger) (gobar.BarSlotConfig, error) {
-	if textColor, ok := config["text_color"].(string); ok {
-		slot.textColor = textColor
-	}
+	var info gobar.BarSlotInfo
+	gobar.MapToBarSlotInfo(config, &info)
+	slot.info = info
 	if command, ok := config["command"].(string); ok {
 		slot.command = command
 	}
@@ -38,32 +38,27 @@ func (slot *BarExternalCommand) InitSlot(config map[string]interface{}, logger *
 
 func (slot *BarExternalCommand) Start(ID int, updateChannel chan<- gobar.UpdateChannelMsg) {
 	if slot.command == "" {
+		slot.info.FullText = "ERROR: Missing command"
+		slot.info.TextColor = "#FF0000"
 		updateChannel <- gobar.UpdateChannelMsg{
-			ID: ID,
-			Info: gobar.BarSlotInfo{
-				FullText:  "ERROR: Missing command",
-				TextColor: "#FF0000",
-			},
+			ID:   ID,
+			Info: slot.info,
 		}
 		return
 	}
-	var text, textColor string
+
 	for {
 		out, err := exec.Command("sh", "-c", slot.command).Output()
 		if err != nil {
-			text = err.Error()
-			textColor = "#FF2222"
+			slot.info.FullText = err.Error()
+			slot.info.TextColor = "#FF2222"
 			slot.interval = 0
 		} else {
-			text = strings.TrimSpace(string(out))
-			textColor = slot.textColor
+			slot.info.FullText = strings.TrimSpace(string(out))
 		}
 		m := gobar.UpdateChannelMsg{
-			ID: ID,
-			Info: gobar.BarSlotInfo{
-				FullText:  text,
-				TextColor: textColor,
-			},
+			ID:   ID,
+			Info: slot.info,
 		}
 		updateChannel <- m
 		if slot.interval > 0 {

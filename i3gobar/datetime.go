@@ -9,15 +9,15 @@ import (
 )
 
 type BarDateTime struct {
-	textColor string
-	format    string
-	interval  int
+	format   string
+	interval int
+	info     gobar.BarSlotInfo
 }
 
 func (slot *BarDateTime) InitSlot(config map[string]interface{}, logger *log.Logger) (gobar.BarSlotConfig, error) {
-	if textColor, ok := config["text_color"].(string); ok {
-		slot.textColor = textColor
-	}
+	var info gobar.BarSlotInfo
+	gobar.MapToBarSlotInfo(config, &info)
+	slot.info = info
 	if interval, ok := config["interval"].(int); ok {
 		slot.interval = interval
 	} else {
@@ -37,12 +37,10 @@ func (slot *BarDateTime) InitSlot(config map[string]interface{}, logger *log.Log
 func (slot *BarDateTime) Start(ID int, updateChannel chan<- gobar.UpdateChannelMsg) {
 	for {
 		now := time.Now()
+		slot.info.FullText = now.Format(slot.format)
 		m := gobar.UpdateChannelMsg{
-			ID: ID,
-			Info: gobar.BarSlotInfo{
-				FullText:  now.Format(slot.format),
-				TextColor: slot.textColor,
-			},
+			ID:   ID,
+			Info: slot.info,
 		}
 		updateChannel <- m
 		time.Sleep(time.Duration(slot.interval) * time.Second)

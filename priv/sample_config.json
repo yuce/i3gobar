@@ -28,10 +28,10 @@
         "interval": 120
     },
     {
-    "name": "external_ip",
-    "module": "ExternalCommand",
-    "label": "E: ",
-    "command": "dig +short myip.opendns.com @resolver1.opendns.com"
+        "name": "external_ip",
+        "module": "ExternalCommand",
+        "label": "E: ",
+        "command": "dig +short myip.opendns.com @resolver1.opendns.com"
     },
     {
         "name": "internal_ip",
@@ -39,6 +39,14 @@
         "label": "I: ",
         "command": "hostname --all-ip-addresses"
     },
+    {
+        "name": "austin_date",
+        "module": "DateTime",
+        "label": "Ast: ",
+        "format":   "15:04",
+        "location": "America/Chicago",
+        "interval": 30
+    },        
     {
         "name": "gaziantep_date",
         "module": "DateTime",

@@ -2,18 +2,15 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
-
-	"os"
-
-	"flag"
-
-	"io/ioutil"
 
 	"github.com/yuce/gobar"
 )

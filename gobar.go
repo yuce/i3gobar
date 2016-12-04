@@ -59,10 +59,11 @@ type BarItem struct {
 	// textWidth     int
 	// scrollStartAt int
 	ID         int
-	Name       string
-	InstanceOf string
+	Name       string `json:"name"`
+	InstanceOf string `json:"module"`
+	Label      string `json:"label"`
 	Slot       BarSlot
-	SlotConfig map[string]interface{}
+	SlotConfig map[string]interface{} `json:"config"`
 	info       BarSlotInfo
 	lastUpdate int64
 	config     BarSlotConfig
@@ -99,25 +100,26 @@ func PrintHeader() {
 }
 
 func CreateBar(items []BarItem, logger *log.Logger) *Bar {
-	barItems := make([]BarItem, 0, len(items))
 	var config BarSlotConfig
 	var err error
+	// var barItems []BarItem
 	updateChannel := make(chan UpdateChannelMsg)
-	for _, item := range items {
+	var item BarItem
+	for i := 0; i < len(items); i++ {
+		item = items[i]
 		config, err = item.Slot.InitSlot(item.SlotConfig, logger)
 		if err == nil {
-			// updateItem(&item, now)
 			item.info.Name = item.Name
 			item.info.Instance = item.InstanceOf
 			item.config = config
-			barItems = append(barItems, item)
-			go item.Slot.Start(len(barItems)-1, updateChannel)
+			// barItems = append(barItems, item)
+			go item.Slot.Start(i, updateChannel)
 		} else {
 			logger.Printf("Error: %q", err)
 		}
 	}
 	return &Bar{
-		items:         barItems,
+		items:         items,
 		logger:        logger,
 		updateChannel: updateChannel,
 	}
@@ -129,7 +131,6 @@ func (bar *Bar) Update() {
 		case m := <-bar.updateChannel:
 			bar.items[m.ID].info = m.Info
 			bar.Println()
-
 		}
 	}
 }
@@ -140,6 +141,10 @@ func (bar *Bar) Println() {
 	bar.logger.Printf("%d %q", len(bar.items), bar.items)
 	fmt.Printf(",[\n")
 	for i, item := range bar.items {
+		item.info.FullText = fmt.Sprintf("%s%s", item.Label, item.info.FullText)
+		item.info.Name = item.Name
+		// item.info.Instance = item.InstanceOf
+
 		j, err = json.Marshal(item.info)
 		if err == nil {
 			if i == 0 {
@@ -170,11 +175,13 @@ func AddModule(name string, typeOf reflect.Type) {
 	typeRegistry[name] = typeOf
 }
 
-func createSlot(name string) (BarSlot, error) {
-	v := reflect.New(typeRegistry[name]).Elem()
-	fmt.Println("V", v, v.Interface())
-	if slot, ok := v.Interface().(BarSlot); ok {
-		return slot, nil
+func CreateSlot(name string) (BarSlot, error) {
+	if entry, ok := typeRegistry[name]; ok {
+		v := reflect.New(entry)
+		if slot, ok := v.Interface().(BarSlot); ok {
+			return slot, nil
+		}
+		return nil, fmt.Errorf("Cannot create instance of `%s`", name)
 	}
-	return nil, fmt.Errorf("Cannot create instance of `%s`", name)
+	return nil, fmt.Errorf("Module not found: `%s`", name)
 }

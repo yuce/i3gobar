@@ -2,7 +2,42 @@
     {
         "name": "text1",
         "module": "StaticText",
-        "text_color": "#FF0000",
-        "text": "Hello, World!" 
+        "config": {
+            "text_color": "#FF0000",
+            "text": "Hello, World!" 
+        }
+    },
+    {
+        "name": "datetime1",
+        "module": "DateTime",
+        "config": {
+            "format":   "2006-01-02 15:04",
+            "interval": 30
+        }
+    },
+    {
+        "name": "external1",
+        "module": "ExternalCommand",
+        "label": "I: ",
+        "config": {
+            "command": "hostname --all-ip-addresses"
+        }        
+    },
+    {
+        "name": "external2",
+        "module": "ExternalCommand",
+        "label": "E: ",
+        "config": {
+            "command": "dig +short myip.opendns.com @resolver1.opendns.com"
+        }
+    },
+    {
+        "name": "external3",
+        "module": "ExternalCommand",
+        "label": "Mem: ",
+        "config": {
+            "command":  "free -m | awk 'NR == 2 {printf(\"%1.2f/%1.2f\\n\", $7/1024, $2/1024)}'",
+            "interval": 60
+        }
     }
 ]

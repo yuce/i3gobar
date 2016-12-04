@@ -11,13 +11,19 @@ import (
 type BarDateTime struct {
 	textColor string
 	format    string
+	interval  int
 }
 
 func (slot *BarDateTime) InitSlot(config map[string]interface{}, logger *log.Logger) (gobar.BarSlotConfig, error) {
 	if textColor, ok := config["text_color"].(string); ok {
 		slot.textColor = textColor
 	}
-	if format, ok := config["text_color"].(string); ok {
+	if interval, ok := config["interval"].(int); ok {
+		slot.interval = interval
+	} else {
+		slot.interval = 60
+	}
+	if format, ok := config["format"].(string); ok {
 		slot.format = format
 	} else {
 		slot.format = "2006-01-02 15:04:05"
@@ -39,6 +45,6 @@ func (slot *BarDateTime) Start(ID int, updateChannel chan<- gobar.UpdateChannelM
 			},
 		}
 		updateChannel <- m
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Duration(slot.interval) * time.Second)
 	}
 }

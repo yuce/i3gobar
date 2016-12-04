@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os/signal"
@@ -9,6 +10,10 @@ import (
 	"time"
 
 	"os"
+
+	"flag"
+
+	"io/ioutil"
 
 	"github.com/yuce/gobar"
 )
@@ -44,47 +49,62 @@ func updateLoop(bar *gobar.Bar, ws <-chan int, logger *log.Logger) {
 	}
 }
 
+func loadConfig(path string) (items []gobar.BarItem, err error) {
+	text, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	json.Unmarshal(text, &items)
+	return
+}
+
 func main() {
-	logfile, err := os.OpenFile("/dev/null", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	var logPath, configPath string
+	flag.StringVar(&logPath, "log", "/dev/null", "Log path. Default: /dev/null")
+	flag.StringVar(&logPath, "l", "/dev/null", "Log file to use. Default: /dev/null")
+	flag.StringVar(&configPath, "config", "", "Configuration path.")
+	flag.StringVar(&configPath, "c", "", "Configuration path (in JSON).")
+
+	flag.Parse()
+
+	logfile, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		fmt.Println("ERR:", err)
 	}
 	defer logfile.Close()
 	logger := log.New(logfile, "gobar:", log.Lshortfile|log.LstdFlags)
+
 	Init()
-	barItems := make([]gobar.BarItem, 3)
-	barItems[0] = gobar.BarItem{
-		Name:       "text1",
-		InstanceOf: "StaticText",
-		Slot:       &BarStaticText{},
-		SlotConfig: map[string]interface{}{
-			"name":       "text1",
-			"module":     "StaticText",
-			"text_color": "#FF0000",
-			"text":       "Hello, World!",
-		},
+	var barItems []gobar.BarItem
+	logger.Printf("Loading configuration from: %s", configPath)
+	barItems, err = loadConfig(configPath)
+	if err != nil {
+		barItems = make([]gobar.BarItem, 1)
+		barItems[0] = gobar.BarItem{
+			Name:  "text1",
+			Label: "ERR: ",
+			Slot:  &BarStaticText{},
+			SlotConfig: map[string]interface{}{
+				"text_color": "#FF0000",
+				"text":       err.Error(),
+			},
+		}
+	} else {
+		for i := 0; i < len(barItems); i++ {
+			slot, err := gobar.CreateSlot(barItems[i].InstanceOf)
+			if err != nil {
+				barItems[i].Slot = &BarStaticText{}
+				barItems[i].Label = "ERR: "
+				barItems[i].SlotConfig = map[string]interface{}{
+					"text_color": "#FF0000",
+					"text":       err.Error(),
+				}
+			} else {
+				barItems[i].Slot = slot
+			}
+		}
 	}
-	barItems[1] = gobar.BarItem{
-		Name:       "text2",
-		InstanceOf: "StaticText",
-		Slot:       &BarStaticText{},
-		SlotConfig: map[string]interface{}{
-			"name":       "text2",
-			"module":     "StaticText",
-			"text_color": "#00FF00",
-			"text":       "Yet another bar item!",
-		},
-	}
-	barItems[2] = gobar.BarItem{
-		Name:       "datetime1",
-		InstanceOf: "DateTime",
-		Slot:       &BarDateTime{},
-		SlotConfig: map[string]interface{}{
-			"name":   "datetime1",
-			"module": "DateTime",
-			// "text_color": "#0000FF",
-		},
-	}
+
 	bar := gobar.CreateBar(barItems, logger)
 	sigs := make(chan os.Signal, 1)
 	done := make(chan bool, 1)

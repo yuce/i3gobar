@@ -9,4 +9,5 @@ import (
 func Init() {
 	gobar.AddModule("StaticText", reflect.TypeOf(BarStaticText{}))
 	gobar.AddModule("DateTime", reflect.TypeOf(BarDateTime{}))
+	gobar.AddModule("ExternalCommand", reflect.TypeOf(BarExternalCommand{}))
 }

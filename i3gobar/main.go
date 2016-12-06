@@ -8,14 +8,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
-	"time"
 
-	"github.com/yuce/gobar"
+	"github.com/yuce/i3gobar"
 )
-
-const oneSec = 1000000000
 
 const (
 	Stopped = iota
@@ -40,15 +36,11 @@ func updateLoop(bar *gobar.Bar, ws <-chan int, logger *log.Logger) {
 			if state == Stopped {
 				return
 			}
-		default:
-			runtime.Gosched()
-			if state == Paused {
-				break
-			}
-			logger.Println("Updating")
-			bar.Update()
-			bar.Println()
-			time.Sleep(oneSec)
+			// default:
+			// 	runtime.Gosched()
+			// 	if state == Paused {
+			// 		break
+			// 	}
 		}
 	}
 }

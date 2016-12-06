@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/yuce/gobar"
+	"github.com/yuce/i3gobar"
 )
 
 type BarStaticText struct {

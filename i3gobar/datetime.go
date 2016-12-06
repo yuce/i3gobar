@@ -2,10 +2,9 @@ package main
 
 import (
 	"log"
-
 	"time"
 
-	"github.com/yuce/gobar"
+	"github.com/yuce/i3gobar"
 )
 
 type BarDateTime struct {

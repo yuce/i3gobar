@@ -2,14 +2,11 @@ package main
 
 import (
 	"log"
-
+	"os/exec"
+	"strings"
 	"time"
 
-	"os/exec"
-
-	"strings"
-
-	"github.com/yuce/gobar"
+	"github.com/yuce/i3gobar"
 )
 
 type BarExternalCommand struct {

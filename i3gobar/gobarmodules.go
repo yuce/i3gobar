@@ -3,7 +3,7 @@ package main
 import (
 	"reflect"
 
-	"github.com/yuce/gobar"
+	"github.com/yuce/i3gobar"
 )
 
 func Init() {

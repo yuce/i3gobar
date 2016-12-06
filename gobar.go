@@ -18,16 +18,16 @@ type barHeader struct {
 type BarSlotAlign string
 
 const (
-	CENTER BarSlotAlign = "center"
-	RIGHT  BarSlotAlign = "right"
-	LEFT   BarSlotAlign = "left"
+	AlignCenter BarSlotAlign = "center"
+	AlignRight  BarSlotAlign = "right"
+	AlignLeft   BarSlotAlign = "left"
 )
 
 type BarSlotMarkup string
 
 const (
-	NONE  BarSlotMarkup = "none"
-	PANGO BarSlotMarkup = "pango"
+	MarkupNone  BarSlotMarkup = "none"
+	MarkupPango BarSlotMarkup = "pango"
 )
 
 type BarSlotInfo struct {
@@ -59,6 +59,7 @@ type BarItem struct {
 	Name       string `json:"name"`
 	Module     string `json:"module"`
 	Label      string `json:"label"`
+	Theme      string `json:"theme"`
 	Slot       BarSlot
 	SlotConfig map[string]interface{} //`json:"config"`
 	info       BarSlotInfo
@@ -77,8 +78,24 @@ type Bar struct {
 	updateChannel chan UpdateChannelMsg
 }
 
+type ThemeItem struct {
+	Color      string `json:"color"`
+	Background string `json:"background"`
+	Border     string `json:"border"`
+}
+
+type Theme struct {
+	Items map[string]ThemeItem `json:"items"`
+}
+
+type Configuration struct {
+	Defaults *BarSlotInfo
+	Theme    *Theme
+	Items    []BarItem
+}
+
 type BarSlot interface {
-	InitSlot(config map[string]interface{}, defaults *BarSlotInfo, logger *log.Logger) (BarSlotConfig, error)
+	InitSlot(config map[string]interface{}, barConfig *Configuration, logger *log.Logger) (BarSlotConfig, error)
 	Start(ID int, updateChannel chan<- UpdateChannelMsg)
 	// PauseSlot()
 	// ResumeSlot()
@@ -96,19 +113,19 @@ func PrintHeader() {
 	fmt.Println("[[]")
 }
 
-func CreateBar(items []BarItem, defaults *BarSlotInfo, logger *log.Logger) *Bar {
-	var config BarSlotConfig
+func CreateBar(barConfig *Configuration, logger *log.Logger) *Bar {
 	var err error
 	// var barItems []BarItem
 	updateChannel := make(chan UpdateChannelMsg)
+	items := barConfig.Items
 	var item BarItem
 	for i := 0; i < len(items); i++ {
 		item = items[i]
-		config, err = item.Slot.InitSlot(item.SlotConfig, defaults, logger)
+		_, err = item.Slot.InitSlot(item.SlotConfig, barConfig, logger)
 		if err == nil {
 			item.info.Name = item.Name
 			item.info.Instance = item.Module
-			item.config = config
+			// item.config = config
 			go item.Slot.Start(i, updateChannel)
 		} else {
 			logger.Printf("Error: %q", err)
@@ -182,18 +199,33 @@ func CreateSlot(name string) (BarSlot, error) {
 	return nil, fmt.Errorf("Module not found: `%s`", name)
 }
 
-func MapToBarSlotInfo(m map[string]interface{}, defaults *BarSlotInfo) BarSlotInfo {
+func MapToBarSlotInfo(m map[string]interface{}, barConfig *Configuration) BarSlotInfo {
 	b, err := json.Marshal(m)
 	var info BarSlotInfo
-	if defaults != nil {
-		info = *defaults
+	if barConfig != nil && barConfig.Defaults != nil {
+		info = *barConfig.Defaults
 	} else {
 		info = BarSlotInfo{
 			MinWidth:            0,
-			Align:               LEFT,
+			Align:               AlignLeft,
 			IsUrgent:            false,
 			HasSeparator:        true,
 			SeparatorBlockWidth: 10,
+		}
+	}
+	if themeKey, ok := m["theme"]; ok && barConfig.Theme != nil {
+		if themeKeyString, ok := themeKey.(string); ok {
+			if themeItem, ok := barConfig.Theme.Items[themeKeyString]; ok {
+				if themeItem.Color != "" {
+					info.TextColor = themeItem.Color
+				}
+				if themeItem.Background != "" {
+					info.BackgroundColor = themeItem.Background
+				}
+				if themeItem.Border != "" {
+					info.BorderColor = themeItem.Border
+				}
+			}
 		}
 	}
 	if err != nil {

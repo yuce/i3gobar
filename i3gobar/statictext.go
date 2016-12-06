@@ -10,8 +10,8 @@ type BarStaticText struct {
 	info gobar.BarSlotInfo
 }
 
-func (slot *BarStaticText) InitSlot(config map[string]interface{}, defaults *gobar.BarSlotInfo, logger *log.Logger) (gobar.BarSlotConfig, error) {
-	info := gobar.MapToBarSlotInfo(config, defaults)
+func (slot *BarStaticText) InitSlot(config map[string]interface{}, barConfig *gobar.Configuration, logger *log.Logger) (gobar.BarSlotConfig, error) {
+	info := gobar.MapToBarSlotInfo(config, barConfig)
 	slot.info = info
 
 	return gobar.BarSlotConfig{

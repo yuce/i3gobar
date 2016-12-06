@@ -1,0 +1,29 @@
+{
+    "items": {
+        "color1": {
+            "color": "#eeeeee",
+            "background": "#01638e",
+            "border": "#039ac0"
+        },
+        "color2": {
+            "color": "#ffffff",
+            "background": "#039ac0",
+            "border": "#01638e"
+        },
+        "color3": {
+            "color": "#111111",
+            "background": "#f3cese",
+            "border": "#f4884a"
+        },
+        "color4": {
+            "color": "#111111",
+            "background": "#f4884a",
+            "border": "#f3cese"
+        },
+        "color5": {
+            "color": "#111111",
+            "background": "#f06e4f",
+            "border": "#f4884a"
+        }
+    }
+}

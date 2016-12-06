@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/yuce/i3gobar"
@@ -36,11 +37,12 @@ func updateLoop(bar *gobar.Bar, ws <-chan int, logger *log.Logger) {
 			if state == Stopped {
 				return
 			}
-			// default:
-			// 	runtime.Gosched()
-			// 	if state == Paused {
-			// 		break
-			// 	}
+		default:
+			runtime.Gosched()
+			if state == Paused {
+				break
+			}
+			bar.Update()
 		}
 	}
 }
@@ -63,6 +65,13 @@ func loadConfig(path string) (*Configuration, error) {
 	return &config, err
 }
 
+func checkErr(err error, msg string) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s:%q", msg, err)
+		os.Exit(2)
+	}
+}
+
 func main() {
 	var logPath, configPath string
 	flag.StringVar(&logPath, "log", "/dev/null", "Log path. Default: /dev/null")
@@ -73,40 +82,27 @@ func main() {
 	flag.Parse()
 
 	logfile, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
-	if err != nil {
-		fmt.Println("ERR:", err)
-	}
+	checkErr(err, "Log file not opened")
 	defer logfile.Close()
 	logger := log.New(logfile, "gobar:", log.Lshortfile|log.LstdFlags)
 
 	Init()
 	logger.Printf("Loading configuration from: %s", configPath)
 	config, err := loadConfig(configPath)
+	checkErr(err, "Config file not opened")
 	barItems := config.barItems
-	if err != nil {
-		barItems = make([]gobar.BarItem, 1)
-		barItems[0] = gobar.BarItem{
-			Name:  "text1",
-			Label: "ERR: ",
-			Slot:  &BarStaticText{},
-			SlotConfig: map[string]interface{}{
+	logger.Printf("bar items: %q", barItems)
+	for i := 0; i < len(barItems); i++ {
+		slot, err := gobar.CreateSlot(barItems[i].Module)
+		if err != nil {
+			barItems[i].Slot = &BarStaticText{}
+			barItems[i].Label = "ERR: "
+			barItems[i].SlotConfig = map[string]interface{}{
 				"text_color": "#FF0000",
 				"full_text":  err.Error(),
-			},
-		}
-	} else {
-		for i := 0; i < len(barItems); i++ {
-			slot, err := gobar.CreateSlot(barItems[i].Module)
-			if err != nil {
-				barItems[i].Slot = &BarStaticText{}
-				barItems[i].Label = "ERR: "
-				barItems[i].SlotConfig = map[string]interface{}{
-					"text_color": "#FF0000",
-					"full_text":  err.Error(),
-				}
-			} else {
-				barItems[i].Slot = slot
 			}
+		} else {
+			barItems[i].Slot = slot
 		}
 	}
 
